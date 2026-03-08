@@ -879,7 +879,8 @@
         <div class="email-form">
           <input type="text" placeholder="Your name" id="artist-name"/>
           <input type="email" placeholder="your@email.com" id="artist-email"/>
-          <button class="btn-primary" onclick="handleArtistSignup()">Join artist waitlist →</button>
+          <button class="btn-primary" id="artist-btn" onclick="handleArtistSignup()">Join artist waitlist →</button>
+          <p id="artist-msg" style="display:none;font-size:12px;"></p>
           <p class="form-note">No spam. Early access only.</p>
         </div>
       </div>
@@ -894,7 +895,8 @@
           <input type="text" placeholder="Your genre (e.g. deep house, dubstep)" id="curator-genre"/>
           <input type="url" placeholder="Playlist or social link (Spotify, Instagram, etc.)" id="curator-link"/>
           <textarea rows="3" placeholder="Why would you be a great Traxly curator? (2–3 sentences)" id="curator-why"></textarea>
-          <button class="btn-blue" onclick="handleCuratorSignup()">Apply as curator →</button>
+          <button class="btn-blue" id="curator-btn" onclick="handleCuratorSignup()">Apply as curator →</button>
+          <p id="curator-msg" style="display:none;font-size:12px;"></p>
           <p class="form-note">Reviewed manually. Quality over volume.</p>
         </div>
       </div>
@@ -927,31 +929,86 @@
     }), { threshold: 0.1 });
     document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 
+    function setFormState(btnId, msgId, state, text) {
+      const btn = document.getElementById(btnId);
+      const msg = document.getElementById(msgId);
+      if (state === 'loading') {
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        btn.textContent = 'Sending…';
+        msg.style.display = 'none';
+      } else if (state === 'success') {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        msg.style.color = '#2a9d2a';
+        msg.style.display = 'block';
+        msg.textContent = text;
+      } else if (state === 'error') {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        msg.style.color = 'var(--accent)';
+        msg.style.display = 'block';
+        msg.textContent = text;
+      } else {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        msg.style.display = 'none';
+      }
+    }
+
     // Artist signup
-    function handleArtistSignup() {
+    async function handleArtistSignup() {
       const name = document.getElementById('artist-name').value.trim();
       const email = document.getElementById('artist-email').value.trim();
-      if (!name) return alert('Please enter your name.');
-      if (!email || !email.includes('@')) return alert('Please enter a valid email.');
-      document.getElementById('artist-name').value = '';
-      document.getElementById('artist-email').value = '';
-      alert(`Thanks ${name}! You're on the list. We'll be in touch when Traxly launches.`);
+      const msg = document.getElementById('artist-msg');
+      msg.style.display = 'none';
+      if (!name) { setFormState('artist-btn','artist-msg','error','Please enter your name.'); return; }
+      if (!email || !email.includes('@')) { setFormState('artist-btn','artist-msg','error','Please enter a valid email.'); return; }
+
+      setFormState('artist-btn','artist-msg','loading');
+      try {
+        const res = await fetch('/api/waitlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'artist', name, email }),
+        });
+        if (!res.ok) throw new Error();
+        document.getElementById('artist-name').value = '';
+        document.getElementById('artist-email').value = '';
+        document.getElementById('artist-btn').textContent = 'You\'re on the list ✓';
+        setFormState('artist-btn','artist-msg','success', `Thanks ${name}! We'll be in touch when Traxly launches.`);
+      } catch {
+        setFormState('artist-btn','artist-msg','error','Something went wrong. Please try again.');
+      }
     }
 
     // Curator signup
-    function handleCuratorSignup() {
+    async function handleCuratorSignup() {
       const name = document.getElementById('curator-name').value.trim();
       const email = document.getElementById('curator-email').value.trim();
       const genre = document.getElementById('curator-genre').value.trim();
       const link = document.getElementById('curator-link').value.trim();
       const why = document.getElementById('curator-why').value.trim();
-      if (!name) return alert('Please enter your name.');
-      if (!email || !email.includes('@')) return alert('Please enter a valid email.');
-      if (!genre) return alert('Please enter your genre specialty.');
-      if (!link) return alert('Please include a playlist or social link.');
-      if (!why) return alert('Please tell us why you\'d be a great curator.');
-      ['curator-name','curator-email','curator-genre','curator-link','curator-why'].forEach(id => document.getElementById(id).value = '');
-      alert(`Thanks ${name}! Your application is in. We review manually and will be in touch soon.`);
+      if (!name) { setFormState('curator-btn','curator-msg','error','Please enter your name.'); return; }
+      if (!email || !email.includes('@')) { setFormState('curator-btn','curator-msg','error','Please enter a valid email.'); return; }
+      if (!genre) { setFormState('curator-btn','curator-msg','error','Please enter your genre specialty.'); return; }
+      if (!link) { setFormState('curator-btn','curator-msg','error','Please include a playlist or social link.'); return; }
+      if (!why) { setFormState('curator-btn','curator-msg','error','Please tell us why you\'d be a great curator.'); return; }
+
+      setFormState('curator-btn','curator-msg','loading');
+      try {
+        const res = await fetch('/api/waitlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'curator', name, email, genre, link, why }),
+        });
+        if (!res.ok) throw new Error();
+        ['curator-name','curator-email','curator-genre','curator-link','curator-why'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('curator-btn').textContent = 'Application received ✓';
+        setFormState('curator-btn','curator-msg','success', `Thanks ${name}! We review manually and will be in touch soon.`);
+      } catch {
+        setFormState('curator-btn','curator-msg','error','Something went wrong. Please try again.');
+      }
     }
   </script>
 </body>

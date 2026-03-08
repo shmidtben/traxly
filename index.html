@@ -1,0 +1,958 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Traxly — Know Your Track Is Ready</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f0e8;
+      --surface: #ede7d9;
+      --surface2: #e4ddd0;
+      --border: #d4ccbc;
+      --accent: #e8441a;
+      --accent2: #1a3ae8;
+      --text: #1a1714;
+      --muted: #7a7060;
+      --muted2: #b0a898;
+      --dark: #1a1714;
+      --dark2: #2a2520;
+      --dark3: #3a3530;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 15px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Nav */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 52px;
+      border-bottom: 1px solid transparent;
+      transition: all 0.3s;
+    }
+    nav.scrolled {
+      background: rgba(245,240,232,0.95);
+      border-color: var(--border);
+      backdrop-filter: blur(12px);
+    }
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 24px;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+    .logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 36px; list-style: none; }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 10px 24px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: all 0.2s;
+    }
+    .nav-cta:hover { background: #c93a16; transform: translateY(-1px); }
+
+    /* Hero */
+    .hero {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      padding: 120px 52px 80px;
+      gap: 64px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero-left { opacity: 0; animation: fadeUp 0.9s 0.2s forwards; }
+    .hero-right { opacity: 0; animation: fadeUp 0.9s 0.5s forwards; }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 28px;
+    }
+    .hero-eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--accent); }
+
+    .hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(48px, 6.5vw, 92px);
+      line-height: 0.95;
+      letter-spacing: -1.5px;
+      color: var(--text);
+    }
+    .hero h1 .accent { color: var(--accent); }
+    .hero h1 .outline {
+      display: block;
+      -webkit-text-stroke: 1.5px var(--muted2);
+      color: transparent;
+    }
+
+    .hero-sub {
+      margin-top: 32px;
+      font-size: 14px;
+      color: var(--muted);
+      max-width: 400px;
+      line-height: 1.85;
+    }
+    .hero-sub strong { color: var(--text); font-weight: 400; }
+
+    .hero-ctas { display: flex; gap: 14px; margin-top: 44px; flex-wrap: wrap; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 14px 30px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary:hover { background: #c93a16; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(232,68,26,0.25); }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 14px 30px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover { border-color: var(--text); transform: translateY(-2px); }
+
+    /* Hero visual */
+    .hero-visual {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 28px;
+    }
+    .visual-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .visual-title { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+    .visual-badge {
+      font-size: 10px;
+      font-weight: 500;
+      background: rgba(232,68,26,0.1);
+      color: var(--accent);
+      padding: 3px 10px;
+      letter-spacing: 0.06em;
+    }
+    .track-info { margin-bottom: 18px; }
+    .track-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; letter-spacing: -0.5px; margin-bottom: 4px; }
+    .track-meta { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; }
+
+    .waveform-visual {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      height: 56px;
+      margin-bottom: 20px;
+    }
+    .wv-bar { flex: 1; background: var(--border); animation: wvpulse 1.8s ease-in-out infinite; }
+    .wv-bar.active { background: var(--accent); }
+    .wv-bar.semi { background: var(--accent2); opacity: 0.3; }
+    @keyframes wvpulse {
+      0%, 100% { transform: scaleY(1); }
+      50% { transform: scaleY(0.4); }
+    }
+
+    .feedback-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+    .pill {
+      font-size: 11px;
+      padding: 4px 12px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+    .pill.hot { background: rgba(232,68,26,0.07); border-color: rgba(232,68,26,0.2); color: var(--accent); }
+    .pill.cool { background: rgba(26,58,232,0.07); border-color: rgba(26,58,232,0.2); color: var(--accent2); }
+
+    .score-row { display: flex; gap: 8px; }
+    .score-box {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 14px 12px;
+      text-align: left;
+    }
+    .score-label { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; display: block; }
+    .score-bar-wrap { height: 3px; background: var(--border); width: 100%; margin-bottom: 6px; }
+    .score-bar { height: 3px; background: var(--accent); }
+    .score-bar.blue { background: var(--accent2); }
+    .score-num {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: -0.3px;
+      line-height: 1;
+      color: var(--text);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(28px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Shared section styles */
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+    .section-label::before { content: ''; width: 20px; height: 1px; background: var(--accent); }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(36px, 4.5vw, 60px);
+      letter-spacing: -2px;
+      line-height: 1.05;
+      margin-bottom: 20px;
+    }
+    .section-sub { color: var(--muted); max-width: 480px; line-height: 1.85; font-size: 14px; }
+
+    /* Problem — dark */
+    .problem-section {
+      background: var(--dark);
+      border-top: 1px solid var(--border);
+      padding: 100px 52px;
+    }
+    .problem-section .section-label { color: var(--accent); }
+    .problem-section .section-label::before { background: var(--accent); }
+    .problem-section .section-title { color: #f5f0e8; }
+    .problem-section .section-sub { color: #7a7060; }
+
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      margin-top: 64px;
+      background: var(--dark2);
+    }
+    .problem-card {
+      background: var(--dark);
+      padding: 40px 28px;
+      border-top: 2px solid transparent;
+      transition: border-color 0.3s;
+    }
+    .problem-card:hover { border-color: var(--accent); }
+    .problem-num {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 44px;
+      letter-spacing: -2px;
+      color: var(--dark2);
+      line-height: 1;
+      margin-bottom: 18px;
+    }
+    .problem-card h3 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; color: #f5f0e8; margin-bottom: 10px; line-height: 1.3; letter-spacing: -0.3px; }
+    .problem-card p { color: #7a7060; font-size: 12px; line-height: 1.8; }
+
+    /* How it works */
+    .how-section { border-top: 1px solid var(--border); padding: 100px 52px; }
+    .how-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: end;
+      margin-bottom: 64px;
+    }
+    .steps {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+    }
+    .step {
+      background: var(--bg);
+      padding: 36px 32px;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s;
+    }
+    .step:hover { background: var(--surface); border-color: var(--accent2); }
+    .step-num {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 48px;
+      letter-spacing: -2px;
+      color: var(--border);
+      line-height: 1;
+      margin-bottom: 18px;
+      transition: color 0.3s;
+    }
+    .step:hover .step-num { color: var(--accent2); }
+    .step h3 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; margin-bottom: 10px; letter-spacing: -0.3px; }
+    .step p { color: var(--muted); font-size: 12px; line-height: 1.85; }
+
+    /* Curators credibility section */
+    .curators-section {
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      padding: 100px 52px;
+    }
+    .curators-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: start;
+      margin-bottom: 72px;
+    }
+    .curators-header .section-sub { max-width: 100%; }
+
+    .curator-proof {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 32px;
+    }
+    .curator-proof-label {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .curator-stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+    }
+    .curator-stat {
+      background: var(--bg);
+      padding: 20px;
+    }
+    .curator-stat-num {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 32px;
+      letter-spacing: -1px;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .curator-stat-label { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+
+    .tiers-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+    }
+
+    .tier-card {
+      background: var(--bg);
+      padding: 44px 36px;
+      position: relative;
+      transition: background 0.3s;
+    }
+    .tier-card:hover { background: #fff; }
+    .tier-card.featured { background: var(--dark); }
+    .tier-card.featured:hover { background: var(--dark2); }
+    .tier-card.featured::after {
+      content: 'INVITE ONLY';
+      position: absolute;
+      top: 24px; right: 24px;
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      background: var(--accent2);
+      color: #fff;
+      padding: 4px 10px;
+    }
+
+    .tier-dot { width: 10px; height: 10px; margin-bottom: 28px; }
+    .tier-card:nth-child(1) .tier-dot { background: var(--accent); }
+    .tier-card:nth-child(2) .tier-dot { background: var(--accent2); }
+
+    .tier-name { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+    .tier-card.featured .tier-name { color: #7a7060; }
+
+    .tier-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 26px;
+      letter-spacing: -0.5px;
+      margin-bottom: 14px;
+      color: var(--text);
+    }
+    .tier-card.featured .tier-title { color: #f5f0e8; }
+
+    .tier-desc {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.85;
+      margin-bottom: 28px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--border);
+    }
+    .tier-card.featured .tier-desc { color: #7a7060; border-color: var(--dark2); }
+
+    .tier-who {
+      margin-bottom: 20px;
+    }
+    .tier-who-label {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted2);
+      margin-bottom: 10px;
+    }
+    .tier-card.featured .tier-who-label { color: var(--dark3); }
+
+    .tier-who-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tier-who-tag {
+      font-size: 11px;
+      padding: 4px 12px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      letter-spacing: 0.03em;
+    }
+    .tier-card:nth-child(1) .tier-who-tag { border-color: rgba(232,68,26,0.2); color: var(--accent); background: rgba(232,68,26,0.05); }
+    .tier-card:nth-child(2) .tier-who-tag { border-color: rgba(26,58,232,0.2); color: #6a7af0; background: rgba(26,58,232,0.06); }
+
+    .tier-features { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .tier-features li { font-size: 12px; color: var(--muted); display: flex; align-items: flex-start; gap: 10px; line-height: 1.5; }
+    .tier-card.featured .tier-features li { color: #7a7060; }
+    .tier-features li::before { content: '→'; font-size: 11px; color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+    .tier-card:nth-child(2) .tier-features li::before { color: #6a7af0; }
+
+    /* Curator credibility callout */
+    .credibility-bar {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--dark);
+      padding: 48px 52px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      overflow: hidden;
+    }
+    .credibility-item {
+      flex: 1;
+      padding: 0 40px;
+      border-right: 1px solid var(--dark2);
+    }
+    .credibility-item:first-child { padding-left: 0; }
+    .credibility-item:last-child { border-right: none; }
+    .credibility-num {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 40px;
+      letter-spacing: -2px;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .credibility-label { font-size: 12px; color: #7a7060; line-height: 1.5; }
+
+    /* CTA */
+    .cta-section { border-top: 1px solid var(--border); }
+    .cta-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+    }
+    .cta-card { padding: 80px 64px; background: var(--bg); }
+    .cta-card.dark { background: var(--dark); }
+
+    .cta-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
+    .cta-label::before { content: ''; width: 20px; height: 1px; background: var(--accent); }
+    .cta-card.dark .cta-label { color: var(--accent2); }
+    .cta-card.dark .cta-label::before { background: var(--accent2); }
+
+    .cta-card h2 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(32px, 3vw, 50px);
+      letter-spacing: -2px;
+      line-height: 1.05;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+    .cta-card.dark h2 { color: #f5f0e8; }
+    .cta-card > p { color: var(--muted); font-size: 13px; line-height: 1.85; margin-bottom: 36px; max-width: 340px; }
+    .cta-card.dark > p { color: #7a7060; }
+
+    .email-form { display: flex; flex-direction: column; gap: 10px; max-width: 400px; }
+
+    .email-form input,
+    .email-form textarea {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 16px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+      resize: vertical;
+    }
+    .cta-card.dark input,
+    .cta-card.dark textarea {
+      background: var(--dark2);
+      border-color: var(--dark3);
+      color: #f5f0e8;
+    }
+    .email-form input::placeholder,
+    .email-form textarea::placeholder { color: var(--muted2); }
+    .cta-card.dark input::placeholder,
+    .cta-card.dark textarea::placeholder { color: var(--dark3); }
+    .email-form input:focus,
+    .email-form textarea:focus { border-color: var(--accent); }
+    .cta-card.dark input:focus,
+    .cta-card.dark textarea:focus { border-color: var(--accent2); }
+
+    .email-form .btn-primary { width: 100%; justify-content: center; }
+
+    .btn-blue {
+      background: var(--accent2);
+      color: #fff;
+      border: none;
+      padding: 14px 30px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: all 0.2s;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-blue:hover { background: #162fd4; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(26,58,232,0.25); }
+
+    .form-note { font-size: 10px; color: var(--muted2); letter-spacing: 0.06em; }
+    .cta-card.dark .form-note { color: var(--dark3); }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+    .footer-logo span { color: var(--accent); }
+    .footer-note { font-size: 11px; color: var(--muted2); letter-spacing: 0.06em; }
+
+    /* Reveal */
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.65s ease, transform 0.65s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* Responsive */
+    @media (max-width: 960px) {
+      nav { padding: 18px 24px; }
+      .nav-links { display: none; }
+      .hero, .how-header, .curators-header { grid-template-columns: 1fr; padding-left: 24px; padding-right: 24px; gap: 40px; }
+      .hero { padding-top: 100px; padding-bottom: 60px; }
+      .problem-section, .how-section, .curators-section { padding: 72px 24px; }
+      .credibility-bar { flex-direction: column; gap: 32px; padding: 48px 24px; }
+      .credibility-item { border-right: none; border-bottom: 1px solid var(--dark2); padding: 0 0 32px 0; width: 100%; }
+      .credibility-item:last-child { border-bottom: none; padding-bottom: 0; }
+      .problem-grid { grid-template-columns: 1fr 1fr; }
+      .steps { grid-template-columns: 1fr; }
+      .tiers-grid { grid-template-columns: 1fr; }
+      .cta-split { grid-template-columns: 1fr; }
+      .cta-card { padding: 56px 32px; }
+      footer { flex-direction: column; gap: 12px; text-align: center; padding: 28px 24px; }
+    }
+    @media (max-width: 540px) {
+      .problem-grid { grid-template-columns: 1fr; }
+      .score-row { flex-direction: column; }
+      .curator-stat-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav id="nav">
+    <div class="logo">Traxly<span>.</span></div>
+    <ul class="nav-links">
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#curators-section">Who reviews</a></li>
+      <li><a href="#curator-cta">For curators</a></li>
+    </ul>
+    <button class="nav-cta" onclick="document.getElementById('artist-cta').scrollIntoView({behavior:'smooth'})">Join waitlist</button>
+  </nav>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow">Pre-release music validation</div>
+      <h1>
+        Know your<br/>
+        track is <span class="accent">ready.</span><br/>
+        <span class="outline">Before anyone hears it.</span>
+      </h1>
+      <p class="hero-sub">
+        Test unreleased music with <strong>verified curators and industry professionals</strong> in your genre —
+        before you release it to the world.
+        Real feedback from <strong>people whose opinions actually matter.</strong>
+      </p>
+      <div class="hero-ctas">
+        <button class="btn-primary" onclick="document.getElementById('artist-cta').scrollIntoView({behavior:'smooth'})">Get early access →</button>
+        <button class="btn-secondary" onclick="document.getElementById('curator-cta').scrollIntoView({behavior:'smooth'})">Apply as curator</button>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="hero-visual">
+        <div class="visual-header">
+          <span class="visual-title">Feedback Report</span>
+          <span class="visual-badge">48hr turnaround</span>
+        </div>
+        <div class="track-info">
+          <div class="track-name">Untitled_Final_v3.wav</div>
+          <div class="track-meta">Deep House · 128 BPM · 6:14</div>
+        </div>
+        <div class="waveform-visual" id="waveform"></div>
+        <div class="feedback-pills">
+          <span class="pill hot">Emotionally resonant</span>
+          <span class="pill cool">Playlist-ready</span>
+          <span class="pill">Strong intro</span>
+          <span class="pill hot">Drop hits hard</span>
+          <span class="pill">Needs outro work</span>
+        </div>
+        <div class="score-row">
+          <div class="score-box">
+            <span class="score-label">Resonance</span>
+            <div class="score-bar-wrap"><div class="score-bar" style="width:87%"></div></div>
+            <div class="score-num">87 / 100</div>
+          </div>
+          <div class="score-box">
+            <span class="score-label">Curators</span>
+            <div class="score-bar-wrap"><div class="score-bar" style="width:100%"></div></div>
+            <div class="score-num">8 reviews</div>
+          </div>
+          <div class="score-box">
+            <span class="score-label">Playlist add</span>
+            <div class="score-bar-wrap"><div class="score-bar blue" style="width:92%"></div></div>
+            <div class="score-num">92% yes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Problem -->
+  <div class="problem-section">
+    <div class="section-label">The problem</div>
+    <h2 class="section-title" style="color:#f5f0e8;">Finishing a track is the hardest part.</h2>
+    <p class="section-sub">You've listened too many times. Your producer friends say different things. You have no idea if it actually lands.</p>
+    <div class="problem-grid">
+      <div class="problem-card reveal">
+        <div class="problem-num">01</div>
+        <h3>Everyone gives different feedback</h3>
+        <p>Your producer friends hear the mixdown. Your non-musician friends are being polite. Neither tells you if it connects emotionally.</p>
+      </div>
+      <div class="problem-card reveal">
+        <div class="problem-num">02</div>
+        <h3>You've lost perspective on your own track</h3>
+        <p>After 200 listens you can't hear it anymore. You need fresh ears — specifically ears that live in your genre.</p>
+      </div>
+      <div class="problem-card reveal">
+        <div class="problem-num">03</div>
+        <h3>Promotion tools don't answer "is it ready?"</h3>
+        <p>Existing platforms tell you if a curator will playlist it. They don't tell you if it's finished. That's a completely different question.</p>
+      </div>
+      <div class="problem-card reveal">
+        <div class="problem-num">04</div>
+        <h3>Nothing fits the creative workflow</h3>
+        <p>Feedback tools feel like PR services. You need something that lives in the studio process — the way Splice does for samples.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- How it works -->
+  <div class="how-section" id="how">
+    <div class="how-header">
+      <div>
+        <div class="section-label">How it works</div>
+        <h2 class="section-title">Drop it in.<br/>Get the signal.</h2>
+      </div>
+      <p class="section-sub">No submission forms. No waiting weeks. Drop your track in, add context, and get structured feedback from verified people who live in your sound world — within 48 hours.</p>
+    </div>
+    <div class="steps">
+      <div class="step reveal">
+        <div class="step-num">01</div>
+        <h3>Drop your track</h3>
+        <p>Upload any version — rough mix, final master, anything in between. Add context: genre, key influences, what you're unsure about.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">02</div>
+        <h3>We match it to verified ears</h3>
+        <p>Traxly routes your track to manually vetted curators and industry professionals whose specialty matches your sound. No random listeners.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">03</div>
+        <h3>Structured feedback, not opinions</h3>
+        <p>Reviewers answer specific questions: Did it make you feel something? Would you add it to a playlist? Where does the energy drop? Timestamped, honest, actionable.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">04</div>
+        <h3>A dashboard, not a paragraph</h3>
+        <p>Results come back as a clean signal — emotional response score, timestamp markers, one key insight. You know exactly where you stand.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Credibility bar -->
+  <div class="credibility-bar">
+    <div class="credibility-item">
+      <div class="credibility-num">100%</div>
+      <div class="credibility-label">Manually vetted curators.<br/>No one gets in without review.</div>
+    </div>
+    <div class="credibility-item">
+      <div class="credibility-num">Genre-<br/>matched</div>
+      <div class="credibility-label">Every reviewer is a specialist<br/>in your specific sound.</div>
+    </div>
+    <div class="credibility-item">
+      <div class="credibility-num">Paid per<br/>review</div>
+      <div class="credibility-label">Curators are compensated for<br/>quality feedback, not volume.</div>
+    </div>
+    <div class="credibility-item">
+      <div class="credibility-num">Tracked<br/>outcomes</div>
+      <div class="credibility-label">Curator credibility scores update<br/>based on real-world track performance.</div>
+    </div>
+  </div>
+
+  <!-- Who reviews -->
+  <div class="curators-section" id="curators-section">
+    <div class="curators-header">
+      <div>
+        <div class="section-label">Who reviews your music</div>
+        <h2 class="section-title">Not random listeners.<br/>The right people.</h2>
+      </div>
+      <div>
+        <p class="section-sub" style="margin-bottom: 24px;">
+          Every person who reviews your track on Traxly has been manually vetted. They have real audiences, real credibility, and real skin in the game — their reputation score updates based on whether their picks actually perform.
+        </p>
+        <p class="section-sub">
+          This isn't crowdsourced feedback. It's structured input from people whose taste already shapes what gets heard in your genre.
+        </p>
+      </div>
+    </div>
+    <div class="tiers-grid">
+
+      <!-- Tier 1 — Verified Curators -->
+      <div class="tier-card reveal">
+        <div class="tier-dot"></div>
+        <div class="tier-name">Tier 01</div>
+        <div class="tier-title">Verified Curators</div>
+        <div class="tier-desc">
+          Playlist curators, music bloggers, and tastemakers with demonstrated audiences and a track record of discovery. Application-only. Every curator is reviewed manually before joining.
+        </div>
+        <div class="tier-who">
+          <div class="tier-who-label">Who they are</div>
+          <div class="tier-who-tags">
+            <span class="tier-who-tag">Playlist curators</span>
+            <span class="tier-who-tag">Music bloggers</span>
+            <span class="tier-who-tag">DJ selectors</span>
+            <span class="tier-who-tag">Tastemaker accounts</span>
+          </div>
+        </div>
+        <ul class="tier-features">
+          <li>Manually vetted before joining</li>
+          <li>Genre specialist matching</li>
+          <li>Timestamped structured feedback</li>
+          <li>Credibility score tracked over time</li>
+          <li>Paid per quality review</li>
+        </ul>
+      </div>
+
+      <!-- Tier 2 — Industry Professionals -->
+      <div class="tier-card featured reveal">
+        <div class="tier-dot"></div>
+        <div class="tier-name">Tier 02</div>
+        <div class="tier-title">Industry Professionals</div>
+        <div class="tier-desc">
+          A&R scouts, sync supervisors, established DJs, and label representatives. Invite-only. For artists who need to know if a track is ready for the next level — not just a playlist.
+        </div>
+        <div class="tier-who">
+          <div class="tier-who-label">Who they are</div>
+          <div class="tier-who-tags">
+            <span class="tier-who-tag">A&R scouts</span>
+            <span class="tier-who-tag">Sync supervisors</span>
+            <span class="tier-who-tag">Label reps</span>
+            <span class="tier-who-tag">Established DJs</span>
+          </div>
+        </div>
+        <ul class="tier-features">
+          <li>Invite-only, strictly limited</li>
+          <li>Signing &amp; sync potential signal</li>
+          <li>Detailed written notes</li>
+          <li>Direct industry connection</li>
+          <li>Premium submission tier</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Dual CTA -->
+  <div class="cta-section">
+    <div class="cta-split">
+      <!-- Artist -->
+      <div class="cta-card" id="artist-cta">
+        <div class="cta-label">For artists</div>
+        <h2>Stop guessing.<br/>Start knowing.</h2>
+        <p>Join the waitlist and be first to test your unreleased music with verified curators before anyone else hears it.</p>
+        <div class="email-form">
+          <input type="text" placeholder="Your name" id="artist-name"/>
+          <input type="email" placeholder="your@email.com" id="artist-email"/>
+          <button class="btn-primary" onclick="handleArtistSignup()">Join artist waitlist →</button>
+          <p class="form-note">No spam. Early access only.</p>
+        </div>
+      </div>
+      <!-- Curator -->
+      <div class="cta-card dark" id="curator-cta">
+        <div class="cta-label">For curators</div>
+        <h2>Get paid to<br/>trust your ears.</h2>
+        <p>Apply to become a verified Traxly curator. Hear music before anyone else — and get paid per structured review in your genre.</p>
+        <div class="email-form">
+          <input type="text" placeholder="Your name" id="curator-name"/>
+          <input type="email" placeholder="your@email.com" id="curator-email"/>
+          <input type="text" placeholder="Your genre (e.g. deep house, dubstep)" id="curator-genre"/>
+          <input type="url" placeholder="Playlist or social link (Spotify, Instagram, etc.)" id="curator-link"/>
+          <textarea rows="3" placeholder="Why would you be a great Traxly curator? (2–3 sentences)" id="curator-why"></textarea>
+          <button class="btn-blue" onclick="handleCuratorSignup()">Apply as curator →</button>
+          <p class="form-note">Reviewed manually. Quality over volume.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-logo">Traxly<span>.</span></div>
+    <p class="footer-note">© 2025 Traxly — Know your track is ready.</p>
+  </footer>
+
+  <script>
+    // Nav scroll
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 40));
+
+    // Waveform
+    const waveform = document.getElementById('waveform');
+    for (let i = 0; i < 60; i++) {
+      const bar = document.createElement('div');
+      bar.className = 'wv-bar' + (i > 18 && i < 36 ? ' active' : i >= 36 && i < 46 ? ' semi' : '');
+      bar.style.cssText = `height:${Math.random()*48+8}px;animation-delay:${Math.random()*2}s;animation-duration:${1.2+Math.random()*1.8}s`;
+      waveform.appendChild(bar);
+    }
+
+    // Scroll reveal
+    const obs = new IntersectionObserver(entries => entries.forEach(e => {
+      if (e.isIntersecting) e.target.classList.add('visible');
+    }), { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+    // Artist signup
+    function handleArtistSignup() {
+      const name = document.getElementById('artist-name').value.trim();
+      const email = document.getElementById('artist-email').value.trim();
+      if (!name) return alert('Please enter your name.');
+      if (!email || !email.includes('@')) return alert('Please enter a valid email.');
+      document.getElementById('artist-name').value = '';
+      document.getElementById('artist-email').value = '';
+      alert(`Thanks ${name}! You're on the list. We'll be in touch when Traxly launches.`);
+    }
+
+    // Curator signup
+    function handleCuratorSignup() {
+      const name = document.getElementById('curator-name').value.trim();
+      const email = document.getElementById('curator-email').value.trim();
+      const genre = document.getElementById('curator-genre').value.trim();
+      const link = document.getElementById('curator-link').value.trim();
+      const why = document.getElementById('curator-why').value.trim();
+      if (!name) return alert('Please enter your name.');
+      if (!email || !email.includes('@')) return alert('Please enter a valid email.');
+      if (!genre) return alert('Please enter your genre specialty.');
+      if (!link) return alert('Please include a playlist or social link.');
+      if (!why) return alert('Please tell us why you\'d be a great curator.');
+      ['curator-name','curator-email','curator-genre','curator-link','curator-why'].forEach(id => document.getElementById(id).value = '');
+      alert(`Thanks ${name}! Your application is in. We review manually and will be in touch soon.`);
+    }
+  </script>
+</body>
+</html>

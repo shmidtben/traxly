@@ -1,0 +1,325 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────────────
+
+enum Role {
+  ARTIST
+  CURATOR
+  ADMIN
+}
+
+enum CuratorStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum SubmissionStatus {
+  PENDING_PAYMENT
+  PAID
+  ASSIGNING
+  IN_REVIEW
+  COMPLETED
+  REFUNDED
+}
+
+enum ReviewStatus {
+  ASSIGNED
+  IN_PROGRESS
+  SUBMITTED
+  EXPIRED
+  SKIPPED
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+}
+
+enum CreditTransactionType {
+  PURCHASE
+  SPEND
+  BONUS
+  REFUND
+}
+
+enum NotificationType {
+  SUBMISSION_COMPLETE
+  REVIEW_ASSIGNED
+  REVIEW_EXPIRING
+  PAYOUT_SENT
+  APPLICATION_APPROVED
+  APPLICATION_REJECTED
+}
+
+enum PlaylistIntent {
+  YES
+  NO
+  MAYBE
+}
+
+enum Readiness {
+  RELEASE_NOW
+  NEEDS_WORK
+  MAJOR_CHANGES
+}
+
+// ─── Tables ─────────────────────────────────────────────────────────────────
+
+model User {
+  id             String   @id @default(cuid())
+  clerk_id       String   @unique
+  email          String   @unique
+  name           String?
+  role           Role     @default(ARTIST)
+  credit_balance Int      @default(0)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  artist_profile       ArtistProfile?
+  curator_profile      CuratorProfile?
+  notifications        Notification[]
+  credit_transactions  CreditTransaction[]
+
+  @@map("users")
+}
+
+model CuratorProfile {
+  id                       String        @id @default(cuid())
+  user_id                  String        @unique
+  status                   CuratorStatus @default(PENDING)
+  bio                      String?
+  genres                   String[]
+  spotify_url              String?
+  instagram_url            String?
+  website_url              String?
+  stripe_account_id        String?
+  credibility_score        Float         @default(0.5)
+  total_reviews            Int           @default(0)
+  current_week_review_count Int          @default(0)
+  max_weekly_reviews       Int           @default(10)
+  application_why          String?
+  application_link         String?
+  created_at               DateTime      @default(now())
+  updated_at               DateTime      @updatedAt
+
+  user        User                          @relation(fields: [user_id], references: [id])
+  assignments SubmissionCuratorAssignment[]
+  reviews     Review[]
+  payouts     Payout[]
+
+  @@map("curator_profiles")
+}
+
+model ArtistProfile {
+  id            String   @id @default(cuid())
+  user_id       String   @unique
+  bio           String?
+  genres        String[]
+  spotify_url   String?
+  instagram_url String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  user        User          @relation(fields: [user_id], references: [id])
+  tracks      Track[]
+  submissions Submission[]
+
+  @@map("artist_profiles")
+}
+
+model Track {
+  id              String    @id @default(cuid())
+  artist_id       String
+  title           String
+  audio_file_url  String    // R2 object key — presigned URLs generated at request time
+  duration_seconds Int?
+  genre           String
+  bpm             Int?
+  key             String?
+  influences      String?
+  artist_notes    String?
+  deleted_at      DateTime?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  artist      ArtistProfile  @relation(fields: [artist_id], references: [id])
+  submissions Submission[]
+  outcomes    TrackOutcome[]
+
+  @@map("tracks")
+}
+
+model Submission {
+  id                       String           @id @default(cuid())
+  track_id                 String
+  artist_id                String
+  status                   SubmissionStatus @default(PENDING_PAYMENT)
+  stripe_session_id        String?
+  stripe_payment_intent_id String?
+  tier                     Int              @default(1)
+  curator_count            Int              @default(5)
+  credits_spent            Int              @default(0)
+  amount_cents             Int              @default(0)
+  completed_at             DateTime?
+  created_at               DateTime         @default(now())
+  updated_at               DateTime         @updatedAt
+
+  track                Track                         @relation(fields: [track_id], references: [id])
+  artist               ArtistProfile                 @relation(fields: [artist_id], references: [id])
+  assignments          SubmissionCuratorAssignment[]
+  reviews              Review[]
+  outcomes             TrackOutcome[]
+  credit_transactions  CreditTransaction[]
+
+  @@map("submissions")
+}
+
+model SubmissionCuratorAssignment {
+  id                      String       @id @default(cuid())
+  submission_id           String
+  curator_id              String
+  status                  ReviewStatus @default(ASSIGNED)
+  listen_token            String       @unique @default(uuid())
+  assigned_at             DateTime     @default(now())
+  deadline_at             DateTime
+  listen_duration_seconds Int          @default(0)
+  created_at              DateTime     @default(now())
+  updated_at              DateTime     @updatedAt
+
+  submission Submission     @relation(fields: [submission_id], references: [id])
+  curator    CuratorProfile @relation(fields: [curator_id], references: [id])
+  review     Review?
+
+  @@map("submission_curator_assignments")
+}
+
+model Review {
+  id                String         @id @default(cuid())
+  assignment_id     String         @unique
+  curator_id        String
+  submission_id     String
+  emotional_response Int           // 1–10
+  playlist_intent   PlaylistIntent
+  readiness         Readiness
+  written_notes     String
+  deleted_at        DateTime?
+  created_at        DateTime       @default(now())
+  updated_at        DateTime       @updatedAt
+
+  assignment  SubmissionCuratorAssignment @relation(fields: [assignment_id], references: [id])
+  curator     CuratorProfile              @relation(fields: [curator_id], references: [id])
+  submission  Submission                  @relation(fields: [submission_id], references: [id])
+  timestamps  ReviewTimestamp[]
+  payout      Payout?
+
+  @@map("reviews")
+}
+
+model ReviewTimestamp {
+  id               String   @id @default(cuid())
+  review_id        String
+  position_seconds Float
+  question_key     String
+  note             String?
+  created_at       DateTime @default(now())
+
+  review Review @relation(fields: [review_id], references: [id])
+
+  @@map("review_timestamps")
+}
+
+model Payout {
+  id                 String       @id @default(cuid())
+  curator_id         String
+  review_id          String       @unique
+  amount_cents       Int
+  tier               Int          @default(1)
+  status             PayoutStatus @default(PENDING)
+  stripe_transfer_id String?
+  created_at         DateTime     @default(now())
+  updated_at         DateTime     @updatedAt
+
+  curator CuratorProfile @relation(fields: [curator_id], references: [id])
+  review  Review         @relation(fields: [review_id], references: [id])
+
+  @@map("payouts")
+}
+
+model TrackOutcome {
+  id                     String   @id @default(cuid())
+  track_id               String
+  submission_id          String
+  spotify_streams_30d    Int?
+  spotify_playlist_adds  Int?
+  checked_at             DateTime @default(now())
+  created_at             DateTime @default(now())
+
+  track      Track      @relation(fields: [track_id], references: [id])
+  submission Submission @relation(fields: [submission_id], references: [id])
+
+  @@map("track_outcomes")
+}
+
+model CreditPack {
+  id              String   @id @default(cuid())
+  name            String
+  credits         Int
+  price_cents     Int
+  stripe_price_id String?
+  active          Boolean  @default(true)
+  created_at      DateTime @default(now())
+
+  @@map("credit_packs")
+}
+
+model CreditTransaction {
+  id            String                @id @default(cuid())
+  user_id       String
+  type          CreditTransactionType
+  credits       Int
+  description   String
+  submission_id String?
+  created_at    DateTime              @default(now())
+
+  user       User        @relation(fields: [user_id], references: [id])
+  submission Submission? @relation(fields: [submission_id], references: [id])
+
+  @@map("credit_transactions")
+}
+
+model WaitlistEntry {
+  id         String   @id @default(cuid())
+  type       String   // "artist" | "curator"
+  name       String
+  email      String
+  genre      String?
+  link       String?
+  why        String?
+  created_at DateTime @default(now())
+
+  @@map("waitlist_entries")
+}
+
+model Notification {
+  id         String           @id @default(cuid())
+  user_id    String
+  type       NotificationType
+  read       Boolean          @default(false)
+  link       String?
+  created_at DateTime         @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@map("notifications")
+}

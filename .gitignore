@@ -1,5 +1,22 @@
 .env
+.env.local
+.env*.local
+project_planning.md
 node_modules/
 
 # Local Netlify folder
 .netlify
+
+# Turborepo
+.turbo
+
+# Next.js
+apps/*/dist
+apps/*/.next
+apps/*/out
+
+# Setup docs (contain credentials/instructions)
+_setup/
+
+# Prisma generated
+packages/db/node_modules/.prisma
